@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
 import os, sys, math
 import xml.sax, xml.sax.handler
 import re
@@ -29,7 +30,7 @@ class PathLine(object):
 	def ecp(self):
 		return self.start
 	def showinfo(self, tr=''):
-		print tr+'Line( %s %s )'%(pc(self.start),pc(self.end))
+		print(tr+'Line( %s %s )'%(pc(self.start),pc(self.end)))
 
 class PathBezier4(object):
 	def __init__(self, start, cp1, cp2, end):
@@ -62,7 +63,7 @@ class PathBezier4(object):
 		else:
 			return self.start
 	def showinfo(self, tr=''):
-		print tr+'Bezier( %s %s %s %s )'%(pc(self.start),pc(self.cp1),pc(self.cp2),pc(self.end))
+		print(tr+'Bezier( %s %s %s %s )'%(pc(self.start),pc(self.cp1),pc(self.cp2),pc(self.end)))
 
 class PathBezier3(PathBezier4):
 	def __init__(self, start, cp, end):
@@ -93,7 +94,7 @@ class LaserPath(object):
 		lp.segments = [x.reverse() for x in self.segments[::-1]]
 		return lp
 	def showinfo(self, tr=''):
-		print tr+'LaserPath:'
+		print(tr+'LaserPath:')
 		for i in self.segments:
 			i.showinfo(tr+' ')
 
@@ -106,7 +107,7 @@ class LaserFrame(object):
 		for i in self.objects:
 			i.transform(func)
 	def showinfo(self, tr=''):
-		print tr+'LaserFrame:'
+		print(tr+'LaserFrame:')
 		for i in self.objects:
 			i.showinfo(tr+' ')
 
@@ -236,7 +237,7 @@ class SVGPath(object):
 
 class SVGReader(xml.sax.handler.ContentHandler):
 	def doctype(self, name, pubid, system):
-		print name,pubid,system
+		print(name,pubid,system)
 	def startDocument(self):
 		self.frame = LaserFrame()
 		self.rects = []
@@ -385,13 +386,13 @@ for id, x, y, w, h in handler.rects:
 		if sx >= x and sy >= y and sx <= (x+w) and sy <= (y+h):
 			char_objs.append(obj)
 	#print >>sys.stderr,  " - %d objects"%len(char_objs)
-	
+
 	def transform(pt):
 		px,py = pt
 		px -= x
 		py -= y
 		return (px,py)
-	
+
 	if len(char_objs) != 0:
 		output += "static const FontPoint fc_%02x[] = {\n"%chrval
 
@@ -399,7 +400,7 @@ for id, x, y, w, h in handler.rects:
 			obj.transform(transform)
 			last_obj = i == len(char_objs)-1
 			output += "\t{0, %8.4f, %8.4f},\n"%obj.startpos()
-			
+
 			for j,seg in enumerate(obj.segments):
 				last_seg = j == len(obj.segments)-1
 				if last_obj and last_seg:
@@ -416,9 +417,9 @@ for id, x, y, w, h in handler.rects:
 					output += "\t{0, %8.4f, %8.4f},\n"%seg.start
 					output += "\t{0, %8.4f, %8.4f},\n"%seg.end
 					output += "\t{%d, %8.4f, %8.4f},\n"%(ctl, seg.end[0], seg.end[1])
-		
+
 		output += "};\n"
-	
+
 		cdefs.append((chrval, w, "fc_%02x"%chrval))
 	else:
 		cdefs.append((chrval, w, "NULL"))

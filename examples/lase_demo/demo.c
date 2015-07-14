@@ -1089,7 +1089,7 @@ int main (int argc, char *argv[])
 	params.max_framelen = params.rate / 24;
 	params.render_flags = RENDER_GRAYSCALE;
 
-	if(olInit(10, 30000) < 0)
+	if(olInit(10, 40000) < 0)
 		return 1;
 	olSetRenderParams(&params);
 

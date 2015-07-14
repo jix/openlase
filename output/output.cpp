@@ -58,6 +58,7 @@ nframes_t ibuf_b = 0;
 sample_t buf_r[MAX_DELAY];
 sample_t buf_g[MAX_DELAY];
 sample_t buf_b[MAX_DELAY];
+static sample_t last_g = 0.0f;
 
 output_config_t *cfg;
 
@@ -82,11 +83,11 @@ static void transform(sample_t *ox, sample_t *oy)
 	float x,y,w;
 	x = *ox;
 	y = *oy;
-	
+
 	*ox = cfg->transform[0][0]*x + cfg->transform[0][1]*y + cfg->transform[0][2];
 	*oy = cfg->transform[1][0]*x + cfg->transform[1][1]*y + cfg->transform[1][2];
 	w = cfg->transform[2][0]*x + cfg->transform[2][1]*y + cfg->transform[2][2];
-	
+
 	*ox /= w;
 	*oy /= w;
 }
@@ -156,7 +157,7 @@ static int process (nframes_t nframes, void *arg)
 	sample_t *o_g = (sample_t *) jack_port_get_buffer (out_g, nframes);
 	sample_t *o_b = (sample_t *) jack_port_get_buffer (out_b, nframes);
 	sample_t *o_e = (sample_t *) jack_port_get_buffer (out_e, nframes);
-	
+
 	sample_t *i_x = (sample_t *) jack_port_get_buffer (in_x, nframes);
 	sample_t *i_y = (sample_t *) jack_port_get_buffer (in_y, nframes);
 	sample_t *i_r = (sample_t *) jack_port_get_buffer (in_r, nframes);
@@ -199,7 +200,7 @@ static int process (nframes_t nframes, void *arg)
 			x *= cfg->size;
 			y *= cfg->size;
 		}
-	
+
 		if (cfg->blank_flags & BLANK_INVERT) {
 			r = 1.0f - r;
 			g = 1.0f - g;
@@ -260,11 +261,21 @@ static int process (nframes_t nframes, void *arg)
 		} else {
 		    frames_dead = 0;
 		}
-		
+
 #ifdef USE_GALVO_FILTERS
 		filter(&x, &y);
 #endif
-		
+
+		sample_t xg = g;
+
+
+		g = last_g + (g - last_g) * (g < last_g ? 20 : 30);
+
+		last_g -= 0.7 * (last_g - xg);
+
+		g -= 0.05;
+		//g *= 0.20;
+
 		*o_x++ = x;
 		*o_y++ = y;
 		buf_r[ibuf_r] = r;
@@ -311,11 +322,11 @@ int main (int argc, char *argv[])
 	int retval;
 	jack_client_t *client;
 	static const char jack_client_name[] = "output";
-	jack_status_t jack_status;	
+	jack_status_t jack_status;
 
 	QApplication app(argc, argv);
 	OutputSettings settings;
-	
+
 	cfg = &settings.cfg;
 
 	if ((client = jack_client_open(jack_client_name, JackNullOption, &jack_status)) == 0) {
